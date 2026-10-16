@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Movie Watchlist 1980–Now</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+html{color-scheme:light}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+/* Layout: one reading column; decades fold open to years, years fold open to films; sticky control bar */
+:root{
+  --bg:#F4F5F9; --surface:#FFFFFF; --ink:#151A2E; --muted:#5D6480; --line:#DFE2EC;
+  --accent:#2E3FB8; --gold:#A87400; --gold-soft:#F6EBCF; --seen:#E9ECF6;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1120; --surface:#161A2C; --ink:#E7E9F3; --muted:#9CA2BD; --line:#272C45;
+  --accent:#8E9BFF; --gold:#E7B84A; --gold-soft:#3A3018; --seen:#1D2238; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1120; --surface:#161A2C; --ink:#E7E9F3; --muted:#9CA2BD; --line:#272C45;
+  --accent:#8E9BFF; --gold:#E7B84A; --gold-soft:#3A3018; --seen:#1D2238; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+header h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,8vw,52px);line-height:.95;letter-spacing:.01em;text-transform:uppercase;margin:0;text-wrap:balance}
+header p{color:var(--muted);margin:8px 0 0;max-width:60ch}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:13px;color:var(--muted)}
+.legend b{color:var(--gold)}
+.progress{margin-top:16px;display:flex;align-items:center;gap:12px}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.count{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.sync{font-size:12px;color:var(--muted);margin-top:6px;min-height:1em}
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px;margin-top:8px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:600 13px var(--body);padding:7px 14px;border:0;background:var(--surface);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.btn{font:600 13px var(--body);padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--accent);cursor:pointer}
+.spacer{flex:1}
+select,.toggle{font:500 13px var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+.toggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--accent);margin:0}
+button:focus-visible,select:focus-visible,.toggle:focus-within,.film:focus-within,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+details{border-bottom:1px solid var(--line)}
+summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;user-select:none}
+summary::-webkit-details-marker{display:none}
+.chev{flex:none;width:18px;height:18px;color:var(--muted);transition:transform .2s}
+details[open] > summary .chev{transform:rotate(90deg)}
+.mini{flex:none;width:56px;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.mini i{display:block;height:100%;background:var(--accent)}
+.tally{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:4.5em;text-align:right}
+.grow{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+
+details.top{margin-top:4px;border-bottom:2px solid var(--ink)}
+details.top > summary{padding-block:16px 10px}
+details.top > summary h2{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;margin:0;letter-spacing:.02em;text-transform:uppercase}
+details.top > summary .sub{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+details.top[open] > summary{border-bottom:1px solid var(--line)}
+
+details.yr > summary{padding:12px 4px 12px 14px}
+details.yr > summary h3{font-family:var(--display);font-weight:600;font-size:24px;line-height:1;margin:0;letter-spacing:.02em}
+details.yr > summary .sub{font-size:12px;color:var(--muted)}
+details.yr:last-child{border-bottom:0}
+details.yr > ul{padding:0 0 10px 14px}
+
+ul{list-style:none;margin:0;padding:0}
+.film{display:flex;align-items:center;gap:12px;padding:10px 6px;border-top:1px solid var(--line);cursor:pointer;border-radius:4px}
+.film input{width:20px;height:20px;accent-color:var(--accent);flex:none;margin:0;cursor:pointer}
+.film .t{flex:1;min-width:0;font-weight:500}
+.film .meta{display:flex;gap:6px;align-items:center;flex:none}
+.film.done .t{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+.film.done{background:var(--seen)}
+.tag{font-size:11px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.y{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.star{color:var(--gold);font-size:17px;line-height:1;width:1em;text-align:center}
+.bp{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);background:var(--gold-soft);border-radius:4px;padding:2px 6px;white-space:nowrap}
+.empty{color:var(--muted);padding:40px 0;text-align:center}
+@media (max-width:480px){.film .tag{display:none}details.top > summary h2{font-size:30px}.mini{display:none}}
+@media (prefers-reduced-motion:reduce){.bar i,.chev{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Movie Watchlist<br>1980 – Now</h1>
+    <p>Fifteen standout films from every year, 690 in all. Open a decade, then a year, and tick off what you've seen. Your ticks are saved in this browser.</p>
+    <div class="legend"><span><b>★</b> Won at least one Academy Award</span><span><b>BEST PICTURE</b> Won the top prize</span></div>
+    <div class="progress"><div class="bar"><i id="barFill"></i></div><span class="count" id="count">0 / 690 seen</span></div>
+  </header>
+
+  <div class="controls">
+    <div class="row">
+      <div class="seg" role="group" aria-label="Group by">
+        <button id="byYear" aria-pressed="true">By year</button>
+        <button id="byGenre" aria-pressed="false">By genre</button>
+      </div>
+      <span class="spacer"></span>
+      <button class="btn" id="expandAll">Expand all</button>
+      <button class="btn" id="collapseAll">Collapse all</button>
+    </div>
+    <div class="row">
+      <select id="genre" aria-label="Genre"><option value="">All genres</option></select>
+      <label class="toggle"><input type="checkbox" id="oscarOnly"> ★ Oscar winners</label>
+      <label class="toggle"><input type="checkbox" id="hideSeen"> Hide seen</label>
+    </div>
+  </div>
+
+  <main id="list"></main>
+</div>
+
+<script>
+// [title, genre, oscar] — oscar: 0 none, 1 won an Academy Award, 2 won Best Picture
+const DATA = {
+1980:[["The Empire Strikes Back","Sci-Fi",1],["Raging Bull","Drama",1],["Ordinary People","Drama",2],["The Shining","Horror",0],["Airplane!","Comedy",0],["The Blues Brothers","Comedy",0],["Caddyshack","Comedy",0],["The Elephant Man","Drama",0],["Coal Miner's Daughter","Drama",1],["Nine to Five","Comedy",0],["Friday the 13th","Horror",0],["Fame","Musical",1],["Melvin and Howard","Comedy",1],["Tess","Romance",1],["Flash Gordon","Sci-Fi",0]],
+1981:[["Raiders of the Lost Ark","Adventure",1],["Chariots of Fire","Drama",2],["On Golden Pond","Drama",1],["Reds","Drama",1],["Das Boot","War",0],["Arthur","Comedy",1],["An American Werewolf in London","Horror",1],["Escape from New York","Action",0],["The Road Warrior","Action",0],["The Evil Dead","Horror",0],["Time Bandits","Fantasy",0],["Stripes","Comedy",0],["Body Heat","Thriller",0],["Excalibur","Fantasy",0],["Gallipoli","War",0]],
+1982:[["E.T. the Extra-Terrestrial","Sci-Fi",1],["Gandhi","Drama",2],["Tootsie","Comedy",1],["Blade Runner","Sci-Fi",0],["The Thing","Horror",0],["First Blood","Action",0],["Poltergeist","Horror",0],["Star Trek II: The Wrath of Khan","Sci-Fi",0],["An Officer and a Gentleman","Romance",1],["Fast Times at Ridgemont High","Comedy",0],["Sophie's Choice","Drama",1],["Tron","Sci-Fi",0],["48 Hrs.","Action",0],["The Verdict","Drama",0],["Conan the Barbarian","Fantasy",0]],
+1983:[["Return of the Jedi","Sci-Fi",1],["Terms of Endearment","Drama",2],["The Right Stuff","Drama",1],["Scarface","Crime",0],["A Christmas Story","Comedy",0],["Trading Places","Comedy",0],["WarGames","Thriller",0],["Risky Business","Comedy",0],["National Lampoon's Vacation","Comedy",0],["Flashdance","Musical",1],["Silkwood","Drama",0],["The Big Chill","Drama",0],["Tender Mercies","Drama",1],["Fanny and Alexander","Drama",1],["The Outsiders","Drama",0]],
+1984:[["Amadeus","Drama",2],["Indiana Jones and the Temple of Doom","Adventure",1],["Ghostbusters","Comedy",0],["The Terminator","Sci-Fi",0],["Beverly Hills Cop","Comedy",0],["The Karate Kid","Drama",0],["Gremlins","Horror",0],["A Nightmare on Elm Street","Horror",0],["This Is Spinal Tap","Comedy",0],["The Killing Fields","War",1],["Romancing the Stone","Adventure",0],["Footloose","Musical",0],["Places in the Heart","Drama",1],["A Passage to India","Drama",1],["Sixteen Candles","Comedy",0]],
+1985:[["Back to the Future","Sci-Fi",1],["Out of Africa","Romance",2],["Witness","Thriller",1],["The Breakfast Club","Comedy",0],["The Goonies","Adventure",0],["The Color Purple","Drama",0],["Rambo: First Blood Part II","Action",0],["Rocky IV","Drama",0],["Cocoon","Sci-Fi",1],["Kiss of the Spider Woman","Drama",1],["Prizzi's Honor","Crime",1],["Brazil","Sci-Fi",0],["Ran","War",1],["Clue","Comedy",0],["Mask","Drama",1]],
+1986:[["Platoon","War",2],["Aliens","Sci-Fi",1],["Top Gun","Action",1],["Stand by Me","Drama",0],["Ferris Bueller's Day Off","Comedy",0],["Hannah and Her Sisters","Comedy",1],["The Color of Money","Drama",1],["The Fly","Horror",1],["Crocodile Dundee","Comedy",0],["Children of a Lesser God","Romance",1],["A Room with a View","Romance",1],["Blue Velvet","Thriller",0],["Labyrinth","Fantasy",0],["Star Trek IV: The Voyage Home","Sci-Fi",0],["The Mission","Drama",1]],
+1987:[["The Last Emperor","Drama",2],["The Untouchables","Crime",1],["RoboCop","Sci-Fi",1],["The Princess Bride","Fantasy",0],["Full Metal Jacket","War",0],["Fatal Attraction","Thriller",0],["Moonstruck","Romance",1],["Wall Street","Drama",1],["Predator","Action",0],["Lethal Weapon","Action",0],["Dirty Dancing","Romance",1],["Good Morning, Vietnam","Comedy",0],["Planes, Trains and Automobiles","Comedy",0],["Spaceballs","Comedy",0],["Innerspace","Sci-Fi",1]],
+1988:[["Rain Man","Drama",2],["Who Framed Roger Rabbit","Comedy",1],["Beetlejuice","Comedy",1],["Die Hard","Action",0],["Big","Comedy",0],["Mississippi Burning","Thriller",1],["The Accused","Drama",1],["A Fish Called Wanda","Comedy",1],["Dangerous Liaisons","Drama",1],["Coming to America","Comedy",0],["Cinema Paradiso","Drama",1],["Akira","Animation",0],["My Neighbor Totoro","Animation",0],["Willow","Fantasy",0],["Working Girl","Comedy",1]],
+1989:[["Driving Miss Daisy","Drama",2],["Glory","War",1],["Dead Poets Society","Drama",1],["Indiana Jones and the Last Crusade","Adventure",1],["When Harry Met Sally...","Romance",0],["Born on the Fourth of July","War",1],["The Little Mermaid","Animation",1],["Batman","Action",1],["Field of Dreams","Drama",0],["My Left Foot","Drama",1],["Do the Right Thing","Drama",0],["The Abyss","Sci-Fi",1],["Back to the Future Part II","Sci-Fi",0],["Steel Magnolias","Drama",0],["National Lampoon's Christmas Vacation","Comedy",0]],
+1990:[["Dances with Wolves","Western",2],["Goodfellas","Crime",1],["Ghost","Romance",1],["The Hunt for Red October","Thriller",1],["Home Alone","Comedy",0],["Pretty Woman","Romance",0],["Total Recall","Sci-Fi",1],["Misery","Thriller",1],["Edward Scissorhands","Fantasy",0],["The Godfather Part III","Crime",0],["Awakenings","Drama",0],["Dick Tracy","Action",1],["Reversal of Fortune","Drama",1],["Die Hard 2","Action",0],["Tremors","Horror",0]],
+1991:[["The Silence of the Lambs","Thriller",2],["Terminator 2: Judgment Day","Sci-Fi",1],["Beauty and the Beast","Animation",1],["JFK","Thriller",1],["Thelma & Louise","Drama",1],["City Slickers","Comedy",1],["Boyz n the Hood","Drama",0],["Hook","Fantasy",0],["Point Break","Action",0],["Robin Hood: Prince of Thieves","Adventure",0],["Fried Green Tomatoes","Drama",0],["Backdraft","Action",0],["Cape Fear","Thriller",0],["Bugsy","Crime",1],["The Addams Family","Comedy",0]],
+1992:[["Unforgiven","Western",2],["Aladdin","Animation",1],["The Last of the Mohicans","Adventure",1],["A Few Good Men","Drama",0],["Reservoir Dogs","Crime",0],["Basic Instinct","Thriller",0],["Batman Returns","Action",0],["Bram Stoker's Dracula","Horror",1],["Howards End","Drama",1],["The Crying Game","Thriller",1],["My Cousin Vinny","Comedy",1],["Scent of a Woman","Drama",1],["A League of Their Own","Comedy",0],["Malcolm X","Drama",0],["The Bodyguard","Romance",0]],
+1993:[["Schindler's List","War",2],["Jurassic Park","Sci-Fi",1],["The Fugitive","Thriller",1],["Philadelphia","Drama",1],["Groundhog Day","Comedy",0],["Mrs. Doubtfire","Comedy",1],["The Piano","Romance",1],["Sleepless in Seattle","Romance",0],["In the Name of the Father","Drama",0],["Tombstone","Western",0],["The Remains of the Day","Drama",0],["The Nightmare Before Christmas","Animation",0],["Cliffhanger","Action",0],["In the Line of Fire","Thriller",0],["Dazed and Confused","Comedy",0]],
+1994:[["Forrest Gump","Drama",2],["Pulp Fiction","Crime",1],["The Lion King","Animation",1],["Speed","Action",1],["The Shawshank Redemption","Drama",0],["True Lies","Action",0],["Léon: The Professional","Crime",0],["Dumb and Dumber","Comedy",0],["Ed Wood","Comedy",1],["Four Weddings and a Funeral","Romance",0],["Interview with the Vampire","Horror",0],["Legends of the Fall","Drama",1],["Quiz Show","Drama",0],["Ace Ventura: Pet Detective","Comedy",0],["Clear and Present Danger","Thriller",0]],
+1995:[["Braveheart","War",2],["Toy Story","Animation",1],["Apollo 13","Drama",1],["Heat","Crime",0],["Se7en","Thriller",0],["The Usual Suspects","Thriller",1],["Casino","Crime",0],["Sense and Sensibility","Romance",1],["Babe","Comedy",1],["Twelve Monkeys","Sci-Fi",0],["GoldenEye","Action",0],["Pocahontas","Animation",1],["Leaving Las Vegas","Drama",1],["Dead Man Walking","Drama",1],["Clueless","Comedy",0]],
+1996:[["The English Patient","Romance",2],["Fargo","Crime",1],["Jerry Maguire","Romance",1],["Independence Day","Sci-Fi",1],["Scream","Horror",0],["Mission: Impossible","Action",0],["Twister","Action",0],["The Rock","Action",0],["Shine","Drama",1],["Trainspotting","Drama",0],["Sling Blade","Drama",1],["Romeo + Juliet","Romance",0],["Evita","Musical",1],["The Nutty Professor","Comedy",1],["Happy Gilmore","Comedy",0]],
+1997:[["Titanic","Romance",2],["Good Will Hunting","Drama",1],["L.A. Confidential","Crime",1],["As Good as It Gets","Comedy",1],["Men in Black","Sci-Fi",1],["Boogie Nights","Drama",0],["The Fifth Element","Sci-Fi",0],["Face/Off","Action",0],["Jackie Brown","Crime",0],["Contact","Sci-Fi",0],["Air Force One","Action",0],["The Full Monty","Comedy",1],["Princess Mononoke","Animation",0],["Starship Troopers","Sci-Fi",0],["Gattaca","Sci-Fi",0]],
+1998:[["Shakespeare in Love","Romance",2],["Saving Private Ryan","War",1],["Life Is Beautiful","Drama",1],["The Truman Show","Drama",0],["The Big Lebowski","Comedy",0],["Armageddon","Action",0],["Rush Hour","Action",0],["There's Something About Mary","Comedy",0],["The Thin Red Line","War",0],["Elizabeth","Drama",1],["Gods and Monsters","Drama",1],["What Dreams May Come","Fantasy",1],["Mulan","Animation",0],["The Prince of Egypt","Animation",1],["Enemy of the State","Thriller",0]],
+1999:[["American Beauty","Drama",2],["The Matrix","Sci-Fi",1],["The Sixth Sense","Thriller",0],["Fight Club","Drama",0],["The Green Mile","Drama",0],["Toy Story 2","Animation",0],["Star Wars: Episode I – The Phantom Menace","Sci-Fi",0],["The Mummy","Adventure",0],["Office Space","Comedy",0],["The Talented Mr. Ripley","Thriller",0],["Being John Malkovich","Comedy",0],["Magnolia","Drama",0],["Boys Don't Cry","Drama",1],["The Cider House Rules","Drama",1],["Tarzan","Animation",1]],
+2000:[["Gladiator","Action",2],["Crouching Tiger, Hidden Dragon","Action",1],["Erin Brockovich","Drama",1],["Memento","Thriller",0],["Cast Away","Drama",0],["X-Men","Action",0],["Traffic","Crime",1],["Almost Famous","Comedy",1],["Remember the Titans","Drama",0],["O Brother, Where Art Thou?","Comedy",0],["Meet the Parents","Comedy",0],["Unbreakable","Thriller",0],["Requiem for a Dream","Drama",0],["Billy Elliot","Drama",0],["Snatch","Crime",0]],
+2001:[["A Beautiful Mind","Drama",2],["The Lord of the Rings: The Fellowship of the Ring","Fantasy",1],["Shrek","Animation",1],["Spirited Away","Animation",1],["Ocean's Eleven","Crime",0],["Harry Potter and the Sorcerer's Stone","Fantasy",0],["Monsters, Inc.","Animation",1],["Moulin Rouge!","Musical",1],["Black Hawk Down","War",1],["Training Day","Crime",1],["Pearl Harbor","War",1],["Amélie","Romance",0],["Donnie Darko","Sci-Fi",0],["Mulholland Drive","Thriller",0],["The Fast and the Furious","Action",0]],
+2002:[["Chicago","Musical",2],["The Lord of the Rings: The Two Towers","Fantasy",1],["The Pianist","War",1],["Catch Me If You Can","Crime",0],["Spider-Man","Action",0],["Harry Potter and the Chamber of Secrets","Fantasy",0],["Minority Report","Sci-Fi",0],["The Bourne Identity","Action",0],["Signs","Sci-Fi",0],["Gangs of New York","Crime",0],["Road to Perdition","Crime",1],["Adaptation.","Comedy",1],["City of God","Crime",0],["My Big Fat Greek Wedding","Comedy",0],["8 Mile","Drama",1]],
+2003:[["The Lord of the Rings: The Return of the King","Fantasy",2],["Finding Nemo","Animation",1],["Lost in Translation","Drama",1],["Master and Commander: The Far Side of the World","Adventure",1],["Pirates of the Caribbean: The Curse of the Black Pearl","Adventure",0],["Kill Bill: Vol. 1","Action",0],["Mystic River","Crime",1],["Big Fish","Fantasy",0],["Elf","Comedy",0],["School of Rock","Comedy",0],["Love Actually","Romance",0],["The Last Samurai","War",0],["Seabiscuit","Drama",0],["Monster","Crime",1],["Cold Mountain","War",1]],
+2004:[["Million Dollar Baby","Drama",2],["The Incredibles","Animation",1],["Spider-Man 2","Action",1],["The Aviator","Drama",1],["Eternal Sunshine of the Spotless Mind","Romance",1],["Shrek 2","Animation",0],["Harry Potter and the Prisoner of Azkaban","Fantasy",0],["Sideways","Comedy",1],["Ray","Drama",1],["Hotel Rwanda","Drama",0],["Collateral","Thriller",0],["The Notebook","Romance",0],["Mean Girls","Comedy",0],["Anchorman","Comedy",0],["The Passion of the Christ","Drama",0]],
+2005:[["Crash","Drama",2],["Brokeback Mountain","Romance",1],["Walk the Line","Musical",1],["King Kong","Adventure",1],["Batman Begins","Action",0],["Harry Potter and the Goblet of Fire","Fantasy",0],["The Chronicles of Narnia: The Lion, the Witch and the Wardrobe","Fantasy",1],["Pride & Prejudice","Romance",0],["Capote","Drama",1],["Munich","Thriller",0],["Wallace & Gromit: The Curse of the Were-Rabbit","Animation",1],["Memoirs of a Geisha","Drama",1],["Wedding Crashers","Comedy",0],["The Constant Gardener","Thriller",1],["Sin City","Crime",0]],
+2006:[["The Departed","Crime",2],["Pan's Labyrinth","Fantasy",1],["Little Miss Sunshine","Comedy",1],["Casino Royale","Action",0],["The Prestige","Thriller",0],["Pirates of the Caribbean: Dead Man's Chest","Adventure",1],["Cars","Animation",0],["The Pursuit of Happyness","Drama",0],["Dreamgirls","Musical",1],["The Devil Wears Prada","Comedy",0],["Children of Men","Sci-Fi",0],["Letters from Iwo Jima","War",1],["The Queen","Drama",1],["Happy Feet","Animation",1],["The Last King of Scotland","Drama",1]],
+2007:[["No Country for Old Men","Thriller",2],["There Will Be Blood","Drama",1],["Ratatouille","Animation",1],["The Bourne Ultimatum","Action",1],["Juno","Comedy",1],["Transformers","Sci-Fi",0],["Superbad","Comedy",0],["Atonement","Romance",1],["Michael Clayton","Thriller",1],["Into the Wild","Drama",0],["Zodiac","Thriller",0],["La Vie en Rose","Drama",1],["3:10 to Yuma","Western",0],["Sweeney Todd","Musical",1],["American Gangster","Crime",0]],
+2008:[["Slumdog Millionaire","Drama",2],["The Dark Knight","Action",1],["WALL-E","Animation",1],["The Curious Case of Benjamin Button","Fantasy",1],["Iron Man","Action",0],["Gran Torino","Drama",0],["Milk","Drama",1],["The Reader","Drama",1],["Kung Fu Panda","Animation",0],["Tropic Thunder","Comedy",0],["Taken","Action",0],["Vicky Cristina Barcelona","Romance",1],["The Wrestler","Drama",0],["Frost/Nixon","Drama",0],["Mamma Mia!","Musical",0]],
+2009:[["The Hurt Locker","War",2],["Avatar","Sci-Fi",1],["Up","Animation",1],["Inglourious Basterds","War",1],["District 9","Sci-Fi",0],["Star Trek","Sci-Fi",1],["The Blind Side","Drama",1],["Precious","Drama",1],["Crazy Heart","Drama",1],["The Hangover","Comedy",0],["Sherlock Holmes","Crime",0],["Up in the Air","Comedy",0],["Coraline","Animation",0],["Fantastic Mr. Fox","Animation",0],["The Secret in Their Eyes","Thriller",1]],
+2010:[["The King's Speech","Drama",2],["Inception","Sci-Fi",1],["The Social Network","Drama",1],["Toy Story 3","Animation",1],["Black Swan","Thriller",1],["How to Train Your Dragon","Animation",0],["The Fighter","Drama",1],["Shutter Island","Thriller",0],["Alice in Wonderland","Fantasy",1],["Harry Potter and the Deathly Hallows – Part 1","Fantasy",0],["Tangled","Animation",0],["True Grit","Western",0],["Winter's Bone","Drama",0],["The Town","Crime",0],["Scott Pilgrim vs. the World","Comedy",0]],
+2011:[["The Artist","Romance",2],["Hugo","Adventure",1],["The Help","Drama",1],["Harry Potter and the Deathly Hallows – Part 2","Fantasy",0],["Drive","Crime",0],["The Descendants","Drama",1],["Moneyball","Drama",0],["Midnight in Paris","Comedy",1],["Bridesmaids","Comedy",0],["The Girl with the Dragon Tattoo","Thriller",1],["Rise of the Planet of the Apes","Sci-Fi",0],["The Iron Lady","Drama",1],["Rango","Animation",1],["Mission: Impossible – Ghost Protocol","Action",0],["A Separation","Drama",1]],
+2012:[["Argo","Thriller",2],["Django Unchained","Western",1],["Lincoln","Drama",1],["Skyfall","Action",1],["The Avengers","Action",0],["Life of Pi","Adventure",1],["Silver Linings Playbook","Romance",1],["Les Misérables","Musical",1],["Zero Dark Thirty","Thriller",1],["The Dark Knight Rises","Action",0],["The Hunger Games","Sci-Fi",0],["Brave","Animation",1],["Wreck-It Ralph","Animation",0],["Amour","Drama",1],["Looper","Sci-Fi",0]],
+2013:[["12 Years a Slave","Drama",2],["Gravity","Sci-Fi",1],["Frozen","Animation",1],["Her","Romance",1],["The Wolf of Wall Street","Comedy",0],["Dallas Buyers Club","Drama",1],["Captain Phillips","Thriller",0],["American Hustle","Crime",0],["The Hunger Games: Catching Fire","Sci-Fi",0],["The Great Gatsby","Romance",1],["Blue Jasmine","Drama",1],["Prisoners","Thriller",0],["Rush","Action",0],["Nebraska","Drama",0],["The Conjuring","Horror",0]],
+2014:[["Birdman","Comedy",2],["Interstellar","Sci-Fi",1],["Whiplash","Drama",1],["The Grand Budapest Hotel","Comedy",1],["Guardians of the Galaxy","Action",0],["Boyhood","Drama",1],["The Imitation Game","Drama",1],["The Theory of Everything","Romance",1],["Gone Girl","Thriller",0],["American Sniper","War",1],["Big Hero 6","Animation",1],["Selma","Drama",1],["John Wick","Action",0],["Edge of Tomorrow","Sci-Fi",0],["Nightcrawler","Thriller",0]],
+2015:[["Spotlight","Drama",2],["Mad Max: Fury Road","Action",1],["The Revenant","Western",1],["Inside Out","Animation",1],["The Martian","Sci-Fi",0],["The Big Short","Drama",1],["Star Wars: The Force Awakens","Sci-Fi",0],["Room","Drama",1],["Ex Machina","Sci-Fi",1],["Bridge of Spies","Thriller",1],["The Danish Girl","Drama",1],["The Hateful Eight","Western",1],["Sicario","Thriller",0],["Creed","Drama",0],["Jurassic World","Sci-Fi",0]],
+2016:[["Moonlight","Drama",2],["La La Land","Musical",1],["Arrival","Sci-Fi",1],["Hacksaw Ridge","War",1],["Zootopia","Animation",1],["Manchester by the Sea","Drama",1],["Fences","Drama",1],["Hidden Figures","Drama",0],["Rogue One: A Star Wars Story","Sci-Fi",0],["Deadpool","Action",0],["Moana","Animation",0],["Hell or High Water","Crime",0],["Lion","Drama",0],["Fantastic Beasts and Where to Find Them","Fantasy",1],["The Jungle Book","Adventure",1]],
+2017:[["The Shape of Water","Fantasy",2],["Get Out","Horror",1],["Dunkirk","War",1],["Coco","Animation",1],["Three Billboards Outside Ebbing, Missouri","Crime",1],["Lady Bird","Comedy",0],["Call Me by Your Name","Romance",1],["Darkest Hour","Drama",1],["Phantom Thread","Drama",1],["Blade Runner 2049","Sci-Fi",1],["Wonder Woman","Action",0],["Logan","Action",0],["It","Horror",0],["I, Tonya","Drama",1],["Baby Driver","Action",0]],
+2018:[["Green Book","Drama",2],["Black Panther","Action",1],["Spider-Man: Into the Spider-Verse","Animation",1],["Bohemian Rhapsody","Musical",1],["A Quiet Place","Horror",0],["Roma","Drama",1],["The Favourite","Comedy",1],["A Star Is Born","Musical",1],["BlacKkKlansman","Crime",1],["Vice","Comedy",1],["First Man","Drama",1],["Avengers: Infinity War","Action",0],["Mission: Impossible – Fallout","Action",0],["If Beale Street Could Talk","Romance",1],["Hereditary","Horror",0]],
+2019:[["Parasite","Thriller",2],["Joker","Crime",1],["1917","War",1],["Avengers: Endgame","Action",0],["Knives Out","Crime",0],["Once Upon a Time in Hollywood","Comedy",1],["Marriage Story","Drama",1],["Little Women","Drama",1],["Ford v Ferrari","Drama",1],["Jojo Rabbit","Comedy",1],["The Irishman","Crime",0],["Toy Story 4","Animation",1],["Rocketman","Musical",1],["Judy","Drama",1],["Uncut Gems","Thriller",0]],
+2020:[["Nomadland","Drama",2],["Soul","Animation",1],["Sound of Metal","Drama",1],["The Father","Drama",1],["Tenet","Sci-Fi",1],["Promising Young Woman","Thriller",1],["Minari","Drama",1],["Judas and the Black Messiah","Drama",1],["Ma Rainey's Black Bottom","Drama",1],["Mank","Drama",1],["The Trial of the Chicago 7","Drama",0],["Another Round","Comedy",1],["Palm Springs","Comedy",0],["Wolfwalkers","Animation",0],["Onward","Animation",0]],
+2021:[["CODA","Drama",2],["Dune","Sci-Fi",1],["The Power of the Dog","Western",1],["Encanto","Animation",1],["Spider-Man: No Way Home","Action",0],["Belfast","Drama",1],["King Richard","Drama",1],["The Eyes of Tammy Faye","Drama",1],["West Side Story","Musical",1],["No Time to Die","Action",1],["Drive My Car","Drama",1],["Licorice Pizza","Comedy",0],["Shang-Chi and the Legend of the Ten Rings","Action",0],["Cruella","Comedy",1],["tick, tick... BOOM!","Musical",0]],
+2022:[["Everything Everywhere All at Once","Sci-Fi",2],["Top Gun: Maverick","Action",1],["All Quiet on the Western Front","War",1],["Avatar: The Way of Water","Sci-Fi",1],["The Banshees of Inisherin","Comedy",0],["The Whale","Drama",1],["Women Talking","Drama",1],["Black Panther: Wakanda Forever","Action",1],["RRR","Action",1],["Guillermo del Toro's Pinocchio","Animation",1],["The Batman","Action",0],["The Fabelmans","Drama",0],["Elvis","Musical",0],["Tár","Drama",0],["Glass Onion","Crime",0]],
+2023:[["Oppenheimer","Drama",2],["Poor Things","Fantasy",1],["Barbie","Comedy",1],["Killers of the Flower Moon","Crime",0],["Spider-Man: Across the Spider-Verse","Animation",0],["The Holdovers","Comedy",1],["The Zone of Interest","War",1],["Godzilla Minus One","Sci-Fi",1],["The Boy and the Heron","Animation",1],["American Fiction","Comedy",1],["Anatomy of a Fall","Thriller",1],["Past Lives","Romance",0],["Maestro","Drama",0],["John Wick: Chapter 4","Action",0],["Mission: Impossible – Dead Reckoning Part One","Action",0]],
+2024:[["Anora","Comedy",2],["Dune: Part Two","Sci-Fi",1],["Conclave","Thriller",1],["Wicked","Musical",1],["The Substance","Horror",1],["The Brutalist","Drama",1],["A Real Pain","Comedy",1],["Emilia Pérez","Musical",1],["Flow","Animation",1],["I'm Still Here","Drama",1],["A Complete Unknown","Musical",0],["Gladiator II","Action",0],["Inside Out 2","Animation",0],["The Wild Robot","Animation",0],["Nosferatu","Horror",0]],
+2025:[["One Battle After Another","Thriller",2],["Sinners","Horror",1],["Frankenstein","Horror",1],["Hamnet","Drama",1],["KPop Demon Hunters","Animation",1],["Weapons","Horror",1],["F1","Action",1],["Avatar: Fire and Ash","Sci-Fi",1],["Sentimental Value","Drama",1],["Marty Supreme","Drama",0],["Bugonia","Sci-Fi",0],["Train Dreams","Drama",0],["The Secret Agent","Thriller",0],["Zootopia 2","Animation",0],["Superman","Action",0]]
+};
+
+const FILMS = [];
+for (const y of Object.keys(DATA)) DATA[y].forEach(([t,g,o]) => FILMS.push({id:y+":"+t, year:+y, title:t, genre:g, oscar:o}));
+const TOTAL = FILMS.length;
+const GENRES = [...new Set(FILMS.map(f=>f.genre))].sort();
+const YEARS = Object.keys(DATA).map(Number);
+
+const $ = id => document.getElementById(id);
+const state = { seen:new Set(), open:new Set(), mode:"year", genre:"", oscarOnly:false, hideSeen:false };
+
+// --- local cache (this browser) ---
+const LS = "mw-seen-v1", LSUI = "mw-ui-v2";
+try { JSON.parse(localStorage.getItem(LS)||"[]").forEach(i=>state.seen.add(i)); } catch(e){}
+try {
+  const u = JSON.parse(localStorage.getItem(LSUI)||"{}");
+  ["mode","genre","oscarOnly","hideSeen"].forEach(k=>{ if (k in u) state[k]=u[k]; });
+  (u.open||[]).forEach(k=>state.open.add(k));
+} catch(e){}
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify([...state.seen])); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem(LSUI, JSON.stringify({mode:state.mode,genre:state.genre,oscarOnly:state.oscarOnly,hideSeen:state.hideSeen,open:[...state.open]})); }catch(e){} }
+
+// Seen films are saved in this browser (localStorage).
+function queueSync(){}
+
+// --- render ---
+const CHEV = '<svg class="chev" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const seenCount = fs => fs.reduce((n,f)=>n+(state.seen.has(f.id)?1:0),0);
+function ordinal(n){ const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+function visible(f){
+  if (state.genre && f.genre !== state.genre) return false;
+  if (state.oscarOnly && !f.oscar) return false;
+  if (state.hideSeen && state.seen.has(f.id)) return false;
+  return true;
+}
+
+function filmLi(f, showYear){
+  const li = document.createElement("li");
+  const lab = document.createElement("label");
+  lab.className = "film" + (state.seen.has(f.id) ? " done" : "");
+  const cb = document.createElement("input");
+  cb.type = "checkbox"; cb.checked = state.seen.has(f.id); cb.dataset.id = f.id;
+  cb.id = "f-" + f.id.replace(/[^a-z0-9]/gi,"-");
+  const t = document.createElement("span"); t.className = "t"; t.textContent = f.title;
+  const meta = document.createElement("span"); meta.className = "meta";
+  if (f.oscar === 2){ const b=document.createElement("span"); b.className="bp"; b.textContent="Best Picture"; meta.append(b); }
+  if (showYear){ const y=document.createElement("span"); y.className="y"; y.textContent=f.year; meta.append(y); }
+  else { const g=document.createElement("span"); g.className="tag"; g.textContent=f.genre; meta.append(g); }
+  const s=document.createElement("span"); s.className="star";
+  if (f.oscar){ s.textContent="★"; s.title="Academy Award winner"; s.setAttribute("aria-label","Academy Award winner"); }
+  meta.append(s);
+  lab.append(cb,t,meta); li.append(lab);
+  return li;
+}
+
+function makeDetails(key, cls, headHTML, all){
+  const d = document.createElement("details");
+  d.className = cls; d.dataset.key = key; d.open = state.open.has(key);
+  const n = seenCount(all), pct = all.length ? n/all.length*100 : 0;
+  const s = document.createElement("summary");
+  s.innerHTML = CHEV + `<span class="grow">${headHTML}</span><span class="mini"><i style="width:${pct}%"></i></span><span class="tally">${n}/${all.length}</span>`;
+  d.append(s);
+  return d;
+}
+
+function render(){
+  const n = seenCount(FILMS);
+  $("count").textContent = n + " / " + TOTAL + " seen";
+  $("barFill").style.width = (n/TOTAL*100) + "%";
+  $("byYear").setAttribute("aria-pressed", state.mode==="year");
+  $("byGenre").setAttribute("aria-pressed", state.mode==="genre");
+  $("genre").value = state.genre; $("oscarOnly").checked = state.oscarOnly; $("hideSeen").checked = state.hideSeen;
+
+  const list = $("list"); list.textContent = "";
+  let shown = 0;
+  if (state.mode === "year"){
+    const decades = [...new Set(YEARS.map(y=>Math.floor(y/10)*10))];
+    for (const dec of decades){
+      const yrs = YEARS.filter(y=>Math.floor(y/10)*10===dec);
+      const decAll = FILMS.filter(f=>yrs.includes(f.year));
+      if (!decAll.some(visible)) continue;
+      const span = yrs[0] + "–" + yrs[yrs.length-1];
+      const dd = makeDetails("d"+dec, "top", `<h2>The ${dec}s</h2><span class="sub">${span}</span>`, decAll);
+      for (const y of yrs){
+        const all = FILMS.filter(f=>f.year===y), fs = all.filter(visible);
+        if (!fs.length) continue;
+        const yd = makeDetails("y"+y, "yr", `<h3>${y}</h3><span class="sub">${ordinal(y-1927)} Academy Awards</span>`, all);
+        const ul = document.createElement("ul"); fs.forEach(f=>ul.append(filmLi(f,false)));
+        yd.append(ul); dd.append(yd); shown += fs.length;
+      }
+      list.append(dd);
+    }
+  } else {
+    for (const g of GENRES){
+      if (state.genre && g!==state.genre) continue;
+      const all = FILMS.filter(f=>f.genre===g), fs = all.filter(visible);
+      if (!fs.length) continue;
+      const gd = makeDetails("g"+g, "top", `<h2>${g}</h2><span class="sub">${all.length} films</span>`, all);
+      const ul = document.createElement("ul"); ul.style.padding = "0 0 10px 14px";
+      fs.forEach(f=>ul.append(filmLi(f,true)));
+      gd.append(ul); list.append(gd); shown += fs.length;
+    }
+  }
+  if (!shown){ const e=document.createElement("p"); e.className="empty"; e.textContent = state.hideSeen ? "You've seen everything that matches these filters." : "No films match these filters."; list.append(e); }
+}
+
+// --- events ---
+GENRES.forEach(g=>{ const o=document.createElement("option"); o.value=g; o.textContent=g; $("genre").append(o); });
+$("list").addEventListener("toggle", e=>{
+  const d = e.target; if (!d.dataset || !d.dataset.key) return;
+  d.open ? state.open.add(d.dataset.key) : state.open.delete(d.dataset.key);
+  saveUI();
+}, true);
+$("list").addEventListener("change", e=>{
+  const id = e.target.dataset.id; if (!id) return;
+  e.target.checked ? state.seen.add(id) : state.seen.delete(id);
+  saveLocal(); queueSync();
+  const fid = e.target.id;
+  render();
+  const again = document.getElementById(fid); if (again) again.focus({preventScroll:true});
+});
+function setAll(open){
+  document.querySelectorAll("#list details").forEach(d=>{
+    d.open = open;
+    open ? state.open.add(d.dataset.key) : state.open.delete(d.dataset.key);
+  });
+  saveUI();
+}
+$("expandAll").onclick = ()=>setAll(true);
+$("collapseAll").onclick = ()=>setAll(false);
+$("byYear").onclick = ()=>{ state.mode="year"; saveUI(); render(); };
+$("byGenre").onclick = ()=>{ state.mode="genre"; saveUI(); render(); };
+$("genre").onchange = e=>{ state.genre=e.target.value; saveUI(); render(); };
+$("oscarOnly").onchange = e=>{ state.oscarOnly=e.target.checked; saveUI(); render(); };
+$("hideSeen").onchange = e=>{ state.hideSeen=e.target.checked; saveUI(); render(); };
+render();
+</script>
+
+</body>
+</html>
