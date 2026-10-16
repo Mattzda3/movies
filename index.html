@@ -90,9 +90,10 @@ ul{list-style:none;margin:0;padding:0}
 <div class="wrap">
   <header>
     <h1>Movie Watchlist<br>1980 – Now</h1>
-    <p>Fifteen standout films from every year, 690 in all. Open a decade, then a year, and tick off what you've seen. Your ticks are saved in this browser.</p>
+    <p>Fifteen standout films from every year, 690 in all. Open a decade, then a year, and tick off what you've seen.</p>
     <div class="legend"><span><b>★</b> Won at least one Academy Award</span><span><b>BEST PICTURE</b> Won the top prize</span></div>
     <div class="progress"><div class="bar"><i id="barFill"></i></div><span class="count" id="count">0 / 690 seen</span></div>
+    <div class="sync" id="sync"></div>
   </header>
 
   <div class="controls">
@@ -115,7 +116,14 @@ ul{list-style:none;margin:0;padding:0}
   <main id="list"></main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
+// ===== Shared list settings =====
+// Paste your Supabase Project URL and anon (public) key here.
+// Leave them blank and the page saves ticks in this browser only.
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+// ================================
 // [title, genre, oscar] — oscar: 0 none, 1 won an Academy Award, 2 won Best Picture
 const DATA = {
 1980:[["The Empire Strikes Back","Sci-Fi",1],["Raging Bull","Drama",1],["Ordinary People","Drama",2],["The Shining","Horror",0],["Airplane!","Comedy",0],["The Blues Brothers","Comedy",0],["Caddyshack","Comedy",0],["The Elephant Man","Drama",0],["Coal Miner's Daughter","Drama",1],["Nine to Five","Comedy",0],["Friday the 13th","Horror",0],["Fame","Musical",1],["Melvin and Howard","Comedy",1],["Tess","Romance",1],["Flash Gordon","Sci-Fi",0]],
@@ -186,8 +194,34 @@ try {
 function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify([...state.seen])); }catch(e){} }
 function saveUI(){ try{ localStorage.setItem(LSUI, JSON.stringify({mode:state.mode,genre:state.genre,oscarOnly:state.oscarOnly,hideSeen:state.hideSeen,open:[...state.open]})); }catch(e){} }
 
-// Seen films are saved in this browser (localStorage).
-function queueSync(){}
+// --- shared list (Supabase) ---
+let sb = null;
+function setStatus(t){ const el=document.getElementById("sync"); if (el) el.textContent=t; }
+async function queueSync(id, checked){
+  if (!sb) return;
+  const q = checked
+    ? sb.from("seen").upsert({ film_id:id }, { onConflict:"film_id", ignoreDuplicates:true })
+    : sb.from("seen").delete().eq("film_id", id);
+  const { error } = await q;
+  setStatus(error ? "Couldn't save that change. Check your connection and try again." : "Shared list · up to date");
+}
+async function startShared(){
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !window.supabase){ setStatus("Saved in this browser only"); return; }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  setStatus("Connecting to the shared list…");
+  const { data, error } = await sb.from("seen").select("film_id").range(0, 4999);
+  if (error){ sb=null; setStatus("Couldn't reach the shared list, so ticks are saved in this browser only."); return; }
+  state.seen = new Set(data.map(r=>r.film_id));
+  saveLocal(); render();
+  setStatus("Shared list · up to date");
+  sb.channel("seen-changes")
+    .on("postgres_changes", { event:"*", schema:"public", table:"seen" }, p=>{
+      if (p.eventType==="INSERT") state.seen.add(p.new.film_id);
+      if (p.eventType==="DELETE" && p.old && p.old.film_id) state.seen.delete(p.old.film_id);
+      saveLocal(); render();
+    })
+    .subscribe();
+}
 
 // --- render ---
 const CHEV = '<svg class="chev" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -280,7 +314,7 @@ $("list").addEventListener("toggle", e=>{
 $("list").addEventListener("change", e=>{
   const id = e.target.dataset.id; if (!id) return;
   e.target.checked ? state.seen.add(id) : state.seen.delete(id);
-  saveLocal(); queueSync();
+  saveLocal(); queueSync(id, e.target.checked);
   const fid = e.target.id;
   render();
   const again = document.getElementById(fid); if (again) again.focus({preventScroll:true});
@@ -300,6 +334,7 @@ $("genre").onchange = e=>{ state.genre=e.target.value; saveUI(); render(); };
 $("oscarOnly").onchange = e=>{ state.oscarOnly=e.target.checked; saveUI(); render(); };
 $("hideSeen").onchange = e=>{ state.hideSeen=e.target.checked; saveUI(); render(); };
 render();
+startShared();
 </script>
 
 </body>
